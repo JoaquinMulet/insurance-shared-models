@@ -5,10 +5,33 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+def get_async_database_url(database_url: str) -> str:
+    """
+    Convierte un DATABASE_URL al formato asyncpg si es necesario.
+    Esto hace que el código sea más tolerante a diferentes configuraciones.
+    """
+    if not database_url:
+        raise ValueError("DATABASE_URL environment variable is not set")
+    
+    # Si ya tiene el driver asyncpg, lo devuelve tal como está
+    if "+asyncpg" in database_url:
+        return database_url
+    
+    # Si es postgresql:// sin driver, lo convierte a asyncpg
+    if database_url.startswith("postgresql://"):
+        return database_url.replace("postgresql://", "postgresql+asyncpg://")
+    
+    # Si es postgresql+psycopg2://, lo convierte a asyncpg
+    if "+psycopg2" in database_url:
+        return database_url.replace("+psycopg2", "+asyncpg")
+    
+    # Para otros casos, asume que necesita asyncpg
+    if database_url.startswith("postgres://"):
+        return database_url.replace("postgres://", "postgresql+asyncpg://")
+    
+    return database_url
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+DATABASE_URL = get_async_database_url(os.getenv("DATABASE_URL", ""))
 
 engine = create_async_engine(DATABASE_URL, echo=False, future=True)
 

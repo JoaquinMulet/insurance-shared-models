@@ -16,8 +16,7 @@ class User(UserBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 # --- Job Schemas for API ---
 
@@ -29,8 +28,7 @@ class JobDashboardItem(BaseModel):
     vehicle_description: Optional[str] = Field(None, description="Descripción del vehículo principal del trabajo")
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 # NUEVO: Esquema para la respuesta completa del dashboard
 class JobDashboardResponse(BaseModel):

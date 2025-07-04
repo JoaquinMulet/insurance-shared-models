@@ -19,12 +19,12 @@ class JobStatus(enum.Enum):
     LLM_PROCESSING = "LLM_PROCESSING"
     LLM_COMPLETED = "LLM_COMPLETED"
     LLM_FAILED = "LLM_FAILED"
-    ASSEMBLING = "ASSEMBLING"
+    ASSEMBLING = "ASSEMBLING"  # Renombrado de ASSEMBLY_IN_PROGRESS para consistencia
     ASSEMBLY_FAILED = "ASSEMBLY_FAILED"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
-    PENDING = "PENDING" # Legacy, puede ser útil mantenerlo
+    PENDING = "PENDING"
 
 class WorkshopType(enum.Enum):
     LIBRE_ELECCION = "LIBRE_ELECCION"
@@ -64,6 +64,8 @@ class Job(Base):
     files = relationship("JobFile", back_populates="job", cascade="all, delete-orphan")
     results = relationship("JobResult", back_populates="job", cascade="all, delete-orphan", uselist=False)
     logs = relationship("ProcessingLog", back_populates="job", cascade="all, delete-orphan")
+    
+    # Estas relaciones se mantienen, pero su llenado ya no es parte del flujo crítico.
     policy_holders = relationship("PolicyHolder", back_populates="job", cascade="all, delete-orphan")
     vehicles = relationship("Vehicle", back_populates="job", cascade="all, delete-orphan")
     insurance_plans = relationship("InsurancePlan", back_populates="job", cascade="all, delete-orphan")
@@ -78,6 +80,9 @@ class JobFile(Base):
 
     job = relationship("Job", back_populates="files")
     ocr_results = relationship("OcrResult", back_populates="file", cascade="all, delete-orphan", uselist=False)
+    
+    # --- CAMBIO CLAVE: Relación con la nueva tabla LlmResult ---
+    llm_result = relationship("LlmResult", back_populates="file", cascade="all, delete-orphan", uselist=False)
 
 class Insurer(Base):
     __tablename__ = "insurers"
@@ -85,6 +90,17 @@ class Insurer(Base):
     name = Column(String(200), unique=True, nullable=False)
 
     insurance_plans = relationship("InsurancePlan", back_populates="insurer")
+
+# --- NUEVA TABLA PARA ALMACENAR LA SALIDA EN BRUTO DEL LLM ---
+class LlmResult(Base):
+    __tablename__ = "llm_results"
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    job_file_id = Column(BigInteger, ForeignKey("job_files.id"), nullable=False, unique=True, index=True)
+    raw_llm_data = Column(JSONB, nullable=False, comment="La salida JSON cruda del modelo LLM, sin procesar.")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    file = relationship("JobFile", back_populates="llm_result")
+
 
 class OcrResult(Base):
     __tablename__ = "ocr_results"
@@ -94,6 +110,9 @@ class OcrResult(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     file = relationship("JobFile", back_populates="ocr_results")
+
+# --- Las siguientes tablas ahora son secundarias al flujo principal ---
+# --- Se mantienen por si se quieren usar para análisis posteriores o features adicionales ---
 
 class PolicyHolder(Base):
     __tablename__ = "policy_holders"
@@ -135,10 +154,9 @@ class DeductiblePremium(Base):
     __tablename__ = "deductible_premiums"
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     insurance_plan_id = Column(BigInteger, ForeignKey("insurance_plans.id"), nullable=False, index=True)
-    deductible_uf = Column(String) # Storing original string from LLM
-    annual_premium_uf = Column(String) # Storing original string from LLM
-    rc_coverage_uf = Column(String) # Storing original string from LLM
-    # Parsed values for assembly
+    deductible_uf = Column(String)
+    annual_premium_uf = Column(String)
+    rc_coverage_uf = Column(String)
     parsed_deductible = Column(DECIMAL(10, 2))
     parsed_premium = Column(DECIMAL(10, 2))
 

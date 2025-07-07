@@ -41,6 +41,18 @@ class WorkshopDetail(BaseModel):
 
 # --- INICIO DE LA SECCIÓN MODIFICADA ---
 
+# --- NUEVO MODELO PARA DEDUCIBLE INTELIGENTE ---
+class SmartDeductibleInfo(BaseModel):
+    """Representa la información sobre la cobertura de Deducible Inteligente."""
+    has_coverage: Optional[bool] = Field(default=False)
+    conditions_observations: Optional[str] = Field(default=None)
+
+    @field_validator('has_coverage', mode='before')
+    @classmethod
+    def validate_has_coverage(cls, v):
+        """Asegura que 'has_coverage' sea siempre booleano, convirtiendo None a False."""
+        return v if v is not None else False
+
 class NewVehicleReplacementInfo(BaseModel):
     # El campo ahora es opcional para aceptar 'null' del LLM.
     has_coverage: Optional[bool] = Field(default=False)
@@ -90,6 +102,7 @@ class RCPlanAnalysis(BaseModel):
     workshop_info: Optional[WorkshopDetail] = Field(default_factory=WorkshopDetail)
     replacement_car_info: Optional[ReplacementCarCoverage] = Field(default_factory=ReplacementCarCoverage)
     new_vehicle_replacement_info: Optional[NewVehicleReplacementInfo] = Field(default_factory=NewVehicleReplacementInfo)
+    smart_deductible_info: Optional[SmartDeductibleInfo] = Field(default_factory=SmartDeductibleInfo) # <-- NUEVA LÍNEA
     # --- FIN MODIFICADO ---
 
     deductible_premiums: List[DeductiblePremiumInfo] = Field(default_factory=list)

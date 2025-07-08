@@ -19,17 +19,27 @@ class JobCreateResponse(BaseModel):
 
 class JobDashboardItem(BaseModel):
     """Representa un único trabajo en la lista del dashboard."""
-    job_id: int
+    
+    # Aquí está el cambio: le decimos a Pydantic que el campo 'job_id'
+    # debe poblarse desde el atributo 'id' del objeto fuente.
+    job_id: int = Field(alias='id')
+    
     status: JobStatus
-    policy_holder_name: Optional[str] = None
-    vehicle_description: Optional[str] = None
+    
+    # Para estos campos, el nombre coincide entre el modelo y el schema,
+    # así que no necesitan alias. Pydantic los mapeará automáticamente.
+    # Solo que en el modelo SQLAlchemy se llaman 'representative_policy_holder_name'
+    # y 'representative_vehicle_description'. ¡Hay que aliasarlos también!
+    policy_holder_name: Optional[str] = Field(default=None, alias='representative_policy_holder_name')
+    vehicle_description: Optional[str] = Field(default=None, alias='representative_vehicle_description')
+
     created_at: datetime
 
-    # --- CAMBIO IMPORTANTE ---
-    # Esto permite que Pydantic cree una instancia de este schema
-    # directamente desde un objeto de modelo SQLAlchemy (ej: el modelo Job).
-    # Es el equivalente a 'orm_mode = True' en Pydantic v1.
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        # MUY IMPORTANTE: Hay que permitir que se usen alias.
+        populate_by_name=True,
+    )
 
 
 class JobDashboardResponse(BaseModel):
@@ -68,7 +78,6 @@ class OcrQueueMessage(BaseModel):
 class LlmQueueMessage(BaseModel):
     """Mensaje para encolar un resultado de OCR para procesamiento con LLM."""
     job_file_id: int
-    ocr_result: str
 
 class AssemblyQueueMessage(BaseModel):
     """Mensaje para encolar un trabajo para el ensamblaje final de resultados."""

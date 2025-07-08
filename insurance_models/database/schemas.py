@@ -1,40 +1,75 @@
-from pydantic import BaseModel, Field, EmailStr
-from typing import List, Optional, Dict, Any
+# insurance-shared-models/insurance_models/database/schemas.py
+
+from pydantic import BaseModel, Field, ConfigDict
+from typing import List, Optional, Any, Dict
 from datetime import datetime
 from .models import JobStatus
 
-# --- User Schemas ---
-class UserBase(BaseModel):
-    email: EmailStr
-    name: Optional[str] = None
+# --- Schemas para la creación de Jobs ---
 
-class UserCreate(UserBase):
-    id: str # Clerk User ID
+class JobCreateRequest(BaseModel):
+    filenames: List[str] = Field(..., min_items=1, max_items=5, description="Lista de nombres de archivo a subir.")
 
-class User(UserBase):
-    id: str
-    created_at: datetime
-    updated_at: datetime
+class JobCreateResponse(BaseModel):
+    job_id: int
+    upload_urls: Dict[str, str]
 
-    model_config = {"from_attributes": True}
 
-# --- Job Schemas for API ---
+# --- Schemas para la visualización de Jobs (Dashboard y Detalle) ---
 
-# NUEVO: Esquema para un solo item en la lista del dashboard
 class JobDashboardItem(BaseModel):
+    """Representa un único trabajo en la lista del dashboard."""
     job_id: int
     status: JobStatus
-    policy_holder_name: Optional[str] = Field(None, description="Nombre del asegurado principal del trabajo")
-    vehicle_description: Optional[str] = Field(None, description="Descripción del vehículo principal del trabajo")
+    policy_holder_name: Optional[str] = None
+    vehicle_description: Optional[str] = None
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    # --- CAMBIO IMPORTANTE ---
+    # Esto permite que Pydantic cree una instancia de este schema
+    # directamente desde un objeto de modelo SQLAlchemy (ej: el modelo Job).
+    # Es el equivalente a 'orm_mode = True' en Pydantic v1.
+    model_config = ConfigDict(from_attributes=True)
 
-# NUEVO: Esquema para la respuesta completa del dashboard
+
 class JobDashboardResponse(BaseModel):
+    """
+    Schema original para la lista de trabajos.
+    Lo mantenemos por si se usa en otro lugar, pero el endpoint principal
+    usará la versión paginada.
+    """
     jobs: List[JobDashboardItem]
 
-# NUEVO: Esquema para la respuesta de detalle del job
+
+# --- ESQUEMA NUEVO PARA PAGINACIÓN ---
+class PaginatedJobDashboardResponse(BaseModel):
+    """
+    Nueva respuesta para el dashboard que incluye metadatos de paginación.
+    """
+    jobs: List[JobDashboardItem]
+    total_jobs: int
+    total_pages: int
+    current_page: int
+    limit: int
+
+
 class JobDetailResponse(BaseModel):
+    """Representa la vista detallada de un trabajo con sus resultados."""
     status: JobStatus
-    result: Optional[Dict[str, Any]] = Field(None, description="El objeto JSON consolidado si el trabajo está completo")
+    result: Optional[Dict[str, Any]] = None
+
+
+# --- Schemas para la comunicación interna (Redis Queues) ---
+
+class OcrQueueMessage(BaseModel):
+    """Mensaje para encolar un archivo para procesamiento OCR."""
+    job_file_id: int
+
+class LlmQueueMessage(Base_Model_):
+    """Mensaje para encolar un resultado de OCR para procesamiento con LLM."""
+    job_file_id: int
+    ocr_result: str
+
+class AssemblyQueueMessage(BaseModel):
+    """Mensaje para encolar un trabajo para el ensamblaje final de resultados."""
+    job_id: int

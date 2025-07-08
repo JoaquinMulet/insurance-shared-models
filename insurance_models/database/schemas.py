@@ -65,7 +65,7 @@ class OcrQueueMessage(BaseModel):
     """Mensaje para encolar un archivo para procesamiento OCR."""
     job_file_id: int
 
-class LlmQueueMessage(Base_Model_):
+class LlmQueueMessage(BaseModel):
     """Mensaje para encolar un resultado de OCR para procesamiento con LLM."""
     job_file_id: int
     ocr_result: str

@@ -23,27 +23,19 @@ class JobCreateResponse(BaseModel):
 class JobDashboardItem(BaseModel):
     """
     Representa la forma de un solo trabajo tal como se expone en la API.
-    Actúa como una capa de traducción entre el modelo de BD y el cliente.
+    Los nombres de los campos ahora coinciden directamente con el modelo `Job` de SQLAlchemy
+    para mayor claridad y consistencia. Se eliminan los alias.
     """
-    
-    # Define el campo público 'job_id' y lo mapea al campo 'id' del modelo ORM.
-    job_id: int = Field(alias='id')
-    
+    id: int  # <-- El campo se llama 'id', igual que en el modelo Job.
     status: JobStatus
-    
-    # Define el campo público 'policy_holder_name' y lo mapea al campo
-    # 'representative_policy_holder_name' del modelo ORM.
-    policy_holder_name: Optional[str] = Field(default=None, alias='representative_policy_holder_name')
-    
-    # Define 'vehicle_description' y lo mapea a 'representative_vehicle_description'.
-    vehicle_description: Optional[str] = Field(default=None, alias='representative_vehicle_description')
-
+    representative_policy_holder_name: Optional[str] = None
+    representative_vehicle_description: Optional[str] = None
     created_at: datetime
 
-    # Configuración centralizada para el comportamiento del modelo:
+    # Configuración de Pydantic para permitir la creación desde un objeto ORM.
+    # No se necesitan alias porque los nombres de campo coinciden.
     model_config = ConfigDict(
-        from_attributes=True,  # Permite crear instancias desde objetos ORM (SQLAlchemy).
-        populate_by_name=True, # Permite usar los alias al leer/poblar el modelo.
+        from_attributes=True,
     )
 
 # ========================================================================

@@ -37,6 +37,19 @@ class R2Client:
             print(f"Error generating presigned URL: {e}")
             return None
 
+    def generate_presigned_download_url(self, object_key: str, expiration: int = 3600) -> str:
+        """Generate a presigned URL for downloading a file from R2."""
+        try:
+            response = self.s3_client.generate_presigned_url(
+                'get_object',
+                Params={'Bucket': self.bucket_name, 'Key': object_key},
+                ExpiresIn=expiration
+            )
+            return response
+        except ClientError as e:
+            print(f"Error generating presigned download URL: {e}")
+            return None
+
 # Singleton instance
 r2_client = R2Client()
 

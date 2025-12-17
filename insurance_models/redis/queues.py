@@ -5,6 +5,11 @@ OCR_QUEUE = "ocr_queue"
 LLM_QUEUE = "llm_queue"
 ASSEMBLY_QUEUE = "assembly_queue"
 
+# Processing queues for reliable queue pattern (BRPOPLPUSH)
+OCR_PROCESSING_QUEUE = "ocr_processing_queue"
+LLM_PROCESSING_QUEUE = "llm_processing_queue"
+ASSEMBLY_PROCESSING_QUEUE = "assembly_processing_queue"
+
 # Pydantic models for message payloads
 # Using integers for IDs now
 

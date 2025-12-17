@@ -112,7 +112,7 @@ class InsuranceExtractionOutput(BaseModel):
     document_type: Optional[str] = Field(default=None)
     policy_holder: Optional[PolicyHolderInfo] = Field(default=None)
     vehicle_info: Optional[VehicleInfo] = Field(default=None)
-    policy_analyses: List[RCPlanAnalysis] = Field(default_factory=list)
+    policy_analyses: List[RCPlanAnalysis]
 
     # Este validador ya no es tan crítico porque los campos son más flexibles,
     # pero se puede mantener si se desea. Se ha comentado para evitar
